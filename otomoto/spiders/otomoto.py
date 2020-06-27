@@ -14,6 +14,23 @@ class OtomotoItem(scrapy.Item):
     features = scrapy.Field()
     price = scrapy.Field()
     price_currency = scrapy.Field()
+    mileage = scrapy.Field()
+    version = scrapy.Field()
+    capacity = scrapy.Field()
+    horse_power = scrapy.Field()
+    fuel_type = scrapy.Field()
+    transmission = scrapy.Field()
+    type = scrapy.Field()
+    number_of_doors = scrapy.Field()
+    color = scrapy.Field()
+    first_owner = scrapy.Field()
+    origin_country = scrapy.Field()
+    no_accidents = scrapy.Field()
+    aso = scrapy.Field()
+    condition = scrapy.Field()
+    VIN_Number = scrapy.Field()
+    region = scrapy.Field()
+    city = scrapy.Field()
 
 
 def filter_out_array(x):
@@ -31,12 +48,15 @@ class OtomotoCarLoader(ItemLoader):
     default_output_processor = TakeFirst()
     features_out = MapCompose(filter_out_array)
     price_out = Compose(TakeFirst(), remove_spaces, convert_to_integer)
+    region_out = Compose(TakeFirst(),remove_spaces)
+    city_out =  Compose(TakeFirst(),remove_spaces)
+
 
 
 class OtomotoSpider(scrapy.Spider):
 
     name = 'otomoto'
-    start_urls = ['https://www.otomoto.pl/osobowe/']
+    start_urls = ['https://www.otomoto.pl/osobowe/uzywane/?search%5Bfilter_float_price%3Ato%5D=200000&search%5Bfilter_float_mileage%3Ato%5D=200000&search%5Border%5D=created_at_first%3Adesc&search%5Bbrand_program_id%5D%5B0%5D=&search%5Bcountry%5D=']
 
     def parse(self, response):
 
@@ -54,6 +74,21 @@ class OtomotoSpider(scrapy.Spider):
             'Marka pojazdu': 'brand',
             'Model pojazdu': 'model',
             'Rok produkcji': 'year',
+            'Wersja': 'version',
+            'Przebieg': 'mileage',
+            'Pojemność skokowa': 'capacity',
+            'Moc': 'horse_power',
+            'Rodzaj paliwa': 'fuel_type',
+            'Skrzynia biegów': 'transmission',
+            'Typ': 'type',
+            'Liczba drzwi': 'number_of_doors',
+            'Kraj pochodzenia': 'origin_country',
+            'Kolor': 'color',
+            'Pierwszy właściciel': 'first_owner',
+            'Bezwypadkowy': 'no_accidents',
+            'Serwisowany w ASO': 'aso',
+            'Stan': 'condition',
+            'VIN':'VIN_Number'
         }
 
         for params in response.css('.offer-params__item'):
@@ -71,6 +106,8 @@ class OtomotoSpider(scrapy.Spider):
         loader.add_css('features', '.offer-features__item::text')
         loader.add_value('url', response.url)
         loader.add_css('price', '.offer-price__number::text')
+        loader.add_css('region','.seller-box__seller-address__label::text',re='([^,]+)$')
+        loader.add_css('city','.seller-box__seller-address__label::text',re='(.*),[^,]*$')
         loader.add_css('price_currency', '.offer-price__currency::text')
         number_id = self.parse_number(response)
         print('number_id:', len(number_id), '|', number_id)
